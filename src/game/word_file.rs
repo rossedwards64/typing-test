@@ -1,19 +1,26 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader},
+    path::Path,
 };
 
 use rand::{rngs::ThreadRng, Rng};
 
-pub struct WordFile {
-    path: String,
+pub struct WordFile<P>
+where
+    P: AsRef<Path>,
+{
+    path: P,
     len: usize,
     rng: ThreadRng,
 }
 
-impl WordFile {
-    pub fn new(path: &'static str) -> Self {
-        let file = match File::open(path) {
+impl<P> WordFile<P>
+where
+    P: AsRef<Path>,
+{
+    pub fn new(path: P) -> Self {
+        let file = match File::open(&path) {
             Ok(f) => f,
             Err(err) => std::panic!("Error opening file! Reason: {err}"),
         };
@@ -21,7 +28,7 @@ impl WordFile {
         let reader = BufReader::new(&file);
 
         Self {
-            path: path.to_string(),
+            path,
             len: reader.lines().count(),
             rng: rand::thread_rng(),
         }
@@ -40,7 +47,7 @@ impl WordFile {
 
         while let Ok(s) = reader.read_line(&mut buf) {
             if s == 0 || cur_line == word_to_read {
-                break
+                break;
             }
             cur_line += 1;
             buf.clear();
@@ -49,7 +56,8 @@ impl WordFile {
         buf
     }
 
-    pub fn len(&self) -> usize {
+    #[inline]
+    pub const fn len(&self) -> usize {
         self.len
     }
 }
