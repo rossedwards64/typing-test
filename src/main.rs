@@ -17,8 +17,6 @@ use tui::{
 
 use game::{game_logic, word_file::WordFile};
 
-use crate::window::window_renderer;
-
 static PATH: &str = "data/words.txt";
 
 fn main() -> Result<(), io::Error> {
@@ -48,6 +46,6 @@ fn main() -> Result<(), io::Error> {
     let mut word_file = WordFile::new(PATH);
     let word = word_file.get_random_word();
     println!("{word}");
-    game_logic::game();
+    game_logic::game_loop();
     Ok(())
 }

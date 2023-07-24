@@ -39,5 +39,5 @@ enum Colours {}
 
 struct Timer {
     minutes: u8,
-    seconds: u8
+    seconds: u8,
 }

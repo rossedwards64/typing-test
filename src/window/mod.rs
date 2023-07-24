@@ -1,2 +1,2 @@
-pub mod window_renderer;
 mod window;
+pub mod window_renderer;

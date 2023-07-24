@@ -1,4 +1,5 @@
 mod game;
+mod window;
 
 #[cfg(test)]
 mod tests {
