@@ -19,27 +19,18 @@ impl<P> WordFile<P>
 where
     P: AsRef<Path>,
 {
-    pub fn new(path: P) -> Self {
-        let file = match File::open(&path) {
-            Ok(f) => f,
-            Err(err) => std::panic!("Error opening file! Reason: {err}"),
-        };
+    pub fn new(path: P) -> WordFile<P> {
+        let file = open_file(&path);
 
-        let reader = BufReader::new(&file);
-
-        Self {
+        WordFile {
             path,
-            len: reader.lines().count(),
+            len: BufReader::new(&file).lines().count(),
             rng: rand::thread_rng(),
         }
     }
 
     pub fn get_random_word(&mut self) -> String {
-        let file = match File::open(&self.path) {
-            Ok(f) => f,
-            Err(err) => std::panic!("Error opening file! Reason: {err}"),
-        };
-
+        let file = open_file(&self.path);
         let word_to_read = self.rng.gen_range(0..self.len);
         let mut reader = BufReader::new(&file);
         let mut buf = String::new();
@@ -59,5 +50,15 @@ where
     #[inline]
     pub const fn len(&self) -> usize {
         self.len
+    }
+}
+
+fn open_file<P>(path: P) -> File
+where
+    P: AsRef<Path>,
+{
+    match File::open(path) {
+        Ok(f) => f,
+        Err(err) => std::panic!("Error opening file! Reason: {err}"),
     }
 }
