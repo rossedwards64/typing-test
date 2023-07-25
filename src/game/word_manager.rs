@@ -7,8 +7,8 @@ pub(super) struct WordManager {
 }
 
 impl WordManager {
-    pub fn new() -> WordManager {
-        WordManager {
+    pub fn new() -> Self {
+        Self {
             list: Vec::new(),
             correct_words: 0,
             missed_words: 0,
@@ -34,8 +34,8 @@ pub(self) struct Word {
 }
 
 impl Word {
-    fn new() -> Word {
-        Word {
+    fn new() -> Self {
+        Self {
             chars: String::new(),
             pos_x: 0,
             pos_y: 0,

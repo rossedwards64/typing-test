@@ -11,11 +11,14 @@ use crossterm::{
 
 use tui::{
     backend::CrosstermBackend,
-    widgets::{Block, Borders},
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
+    widgets::{Block, BorderType, Borders},
     Terminal,
 };
 
 use game::{game_logic, word_file::WordFile};
+use window::window_renderer;
 
 static PATH: &str = "data/words.txt";
 
@@ -25,12 +28,10 @@ fn main() -> Result<(), io::Error> {
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    let renderer = window_renderer::WindowRenderer::new(&mut terminal);
 
-    terminal.draw(|f| {
-        let size = f.size();
-        let block = Block::default().title("Block").borders(Borders::ALL);
-        f.render_widget(block, size);
-    })?;
+    let mut word_file = WordFile::new(PATH);
+    let word = word_file.get_random_word();
 
     thread::sleep(Duration::from_millis(5000));
 
@@ -43,9 +44,6 @@ fn main() -> Result<(), io::Error> {
 
     terminal.show_cursor()?;
 
-    let mut word_file = WordFile::new(PATH);
-    let word = word_file.get_random_word();
-    println!("{word}");
     game_logic::game_loop();
     Ok(())
 }

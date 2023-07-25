@@ -19,10 +19,10 @@ impl<P> WordFile<P>
 where
     P: AsRef<Path>,
 {
-    pub fn new(path: P) -> WordFile<P> {
+    pub fn new(path: P) -> Self {
         let file = open_file(&path);
 
-        WordFile {
+        Self {
             path,
             len: BufReader::new(&file).lines().count(),
             rng: rand::thread_rng(),
@@ -43,7 +43,6 @@ where
             cur_line += 1;
             buf.clear();
         }
-        println!("{word_to_read}: {buf}");
         buf
     }
 
