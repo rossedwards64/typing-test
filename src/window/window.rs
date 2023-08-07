@@ -64,24 +64,20 @@ impl Window for InputWindow {
 impl InputWindow {
     pub fn get_input(&self) -> String {
         let mut buf = String::new();
-        if let Ok(is_event) = event::poll(Duration::from_millis(100)) {
-            if is_event {
-                while let Ok(event) = event::read() {
-                    if let event::Event::Key(key) = event {
-                        match key.code {
-                            event::KeyCode::Char(c) => {
-                                buf.push(c)
-                            },
-                            event::KeyCode::Backspace => {
-                                buf.pop();
-                                ()
-                            },
-                            _ => (),
+        if matches!(event::poll(Duration::from_millis(100)), Ok(true)) {
+            while let Ok(event) = event::read() {
+                if let event::Event::Key(key) = event {
+                    match key.code {
+                        event::KeyCode::Char(c) => buf.push(c),
+                        event::KeyCode::Backspace => {
+                            buf.pop();
                         }
+                        _ => (),
                     }
                 }
             }
         }
+
         buf
     }
 }

@@ -1,50 +1,61 @@
 use std::io;
 
 use tui::backend::CrosstermBackend;
-use tui::layout::{Constraint, Direction};
-use tui::widgets::{Block, Borders};
-use tui::Frame;
+use tui::layout::{Alignment, Constraint, Direction};
+use tui::widgets::{Block, Borders, Paragraph};
 use tui::{layout::Layout, Terminal};
 
 use super::window::{GameWindow, InfoWindow, InputWindow, Window};
 
 type CrossTermTerminal = Terminal<CrosstermBackend<io::Stdout>>;
-pub struct WindowRenderer {
+pub struct WindowRenderer<'a> {
+    terminal: &'a mut CrossTermTerminal,
     game_win: GameWindow,
     input_win: InputWindow,
     info_win: InfoWindow,
 }
 
-impl WindowRenderer {
-    pub fn new(terminal: &mut CrossTermTerminal) -> Result<Self, io::Error> {
-        let game_win = GameWindow::new(0, 0);
-        let input_win = InputWindow::new(0, 0);
-        let info_win = InfoWindow::new(0, 0);
-        let _ = terminal.draw(|frame| {
-            let windows = Layout::default()
-                .direction(Direction::Vertical)
+impl<'a> WindowRenderer<'a> {
+    pub fn new(terminal: &'a mut CrossTermTerminal) -> Self {
+        Self {
+            terminal,
+            game_win: GameWindow::new(0, 0),
+            input_win: InputWindow::new(0, 0),
+            info_win: InfoWindow::new(0, 0)
+        }
+    }
+
+    pub fn render_windows(&mut self) {
+        self.render_game_win();
+        self.render_info_win();
+        self.render_input_win();
+    }
+
+    fn render_game_win(&mut self) {
+        let _ = self.terminal.draw(|frame| {
+            let window = Layout::default()
+                .direction(Direction::Horizontal)
                 .margin(1)
-                .constraints(
-                    [
-                        Constraint::Percentage(80),
-                        Constraint::Percentage(10),
-                        Constraint::Percentage(10),
-                    ]
-                    .as_ref(),
-                )
+                .constraints([Constraint::Percentage(80)].as_ref())
                 .split(frame.size());
 
-            let block = Block::default().title("SOMETHING").borders(Borders::ALL);
+            let block = Block::default().borders(Borders::ALL);
+            let paragraph = Paragraph::new("TEXT HERE").alignment(Alignment::Center);
 
-            for window in windows {
-                frame.render_widget(block.clone(), window.clone());
-            }
+            frame.render_widget(block, window[0]);
+            frame.render_widget(paragraph, window[0]);
         });
+    }
 
-        Ok(Self {
-            game_win,
-            input_win,
-            info_win,
-        })
+    fn render_input_win(&mut self) {
+
+    }
+
+    fn render_info_win(&mut self) {
+
+    }
+
+    pub fn terminal(&mut self) -> &mut CrossTermTerminal {
+        &mut self.terminal
     }
 }
