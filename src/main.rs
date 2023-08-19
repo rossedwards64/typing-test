@@ -3,7 +3,11 @@
 mod game;
 mod window;
 
-use std::{io, thread, time::Duration};
+use std::{
+    io::{self},
+    thread,
+    time::Duration,
+};
 
 use crossterm::{
     event::DisableMouseCapture,
@@ -11,32 +15,26 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders},
-    Terminal,
-};
+use tui::{backend::CrosstermBackend, Terminal};
 
 use game::{game_logic, word_file::WordFile};
-use window::window_renderer;
+use window::window_renderer::{self};
 
 static PATH: &str = "data/words.txt";
 
 fn main() -> Result<(), io::Error> {
     let mut terminal = setup_tui()?;
+
     let mut renderer = window_renderer::WindowRenderer::new(&mut terminal);
 
     let mut word_file = WordFile::new(PATH);
-    let word = word_file.get_random_word();
+    let _word = word_file.get_random_word();
 
-    renderer.render_windows();
+    renderer?.render_windows();
 
     game_logic::game_loop();
 
-    thread::sleep(Duration::from_millis(5000));
-
+    thread::sleep(Duration::from_secs(5));
 
     destroy_tui(terminal)?;
     Ok(())

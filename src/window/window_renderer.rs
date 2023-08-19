@@ -13,49 +13,59 @@ pub struct WindowRenderer<'a> {
     game_win: GameWindow,
     input_win: InputWindow,
     info_win: InfoWindow,
+    width: u16,
+    height: u16,
 }
 
 impl<'a> WindowRenderer<'a> {
-    pub fn new(terminal: &'a mut CrossTermTerminal) -> Self {
-        Self {
+    pub fn new(terminal: &'a mut CrossTermTerminal) -> Result<Self, io::Error> {
+        let (width, height) = match terminal.size() {
+            Ok(rect) => (rect.width, rect.height),
+            Err(err) => panic!("Couldn't get terminal size! {err}"),
+        };
+
+        let game_win = GameWindow::new(0, 0, height.saturating_sub(6), width);
+
+        let input_win = InputWindow::new(0, 22, 5, width.saturating_div(2));
+
+        let info_win = InfoWindow::new(width.saturating_div(2), 22, 8, width.saturating_div(2));
+
+        Ok(Self {
             terminal,
-            game_win: GameWindow::new(0, 0),
-            input_win: InputWindow::new(0, 0),
-            info_win: InfoWindow::new(0, 0)
-        }
+            game_win,
+            input_win,
+            info_win,
+            width,
+            height,
+        })
     }
 
     pub fn render_windows(&mut self) {
         self.render_game_win();
-        self.render_info_win();
         self.render_input_win();
-    }
+        self.render_info_win();
 
-    fn render_game_win(&mut self) {
-        let _ = self.terminal.draw(|frame| {
-            let window = Layout::default()
-                .direction(Direction::Horizontal)
-                .margin(1)
-                .constraints([Constraint::Percentage(80)].as_ref())
-                .split(frame.size());
-
-            let block = Block::default().borders(Borders::ALL);
-            let paragraph = Paragraph::new("TEXT HERE").alignment(Alignment::Center);
-
-            frame.render_widget(block, window[0]);
-            frame.render_widget(paragraph, window[0]);
+        let result = self.terminal.draw(|frame| {
+            frame.render_widget(
+                Block::default().borders(Borders::all()).title("GAME"),
+                self.game_win.get_window(),
+            );
+            frame.render_widget(
+                Block::default().borders(Borders::all()).title("INPUT"),
+                self.input_win.get_window(),
+            );
+            frame.render_widget(
+                Block::default().borders(Borders::all()).title("INFO"),
+                self.info_win.get_window(),
+            );
         });
+
+        if result.is_err() {}
     }
 
-    fn render_input_win(&mut self) {
+    fn render_game_win(&self) {}
 
-    }
+    fn render_input_win(&self) {}
 
-    fn render_info_win(&mut self) {
-
-    }
-
-    pub fn terminal(&mut self) -> &mut CrossTermTerminal {
-        &mut self.terminal
-    }
+    fn render_info_win(&self) {}
 }
