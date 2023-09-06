@@ -23,8 +23,8 @@ static PATH: &str = "data/words.txt";
 fn main() -> Result<(), io::Error> {
     let mut terminal = setup_tui()?;
 
-    let mut renderer = window_renderer::WindowRenderer::new(&mut terminal);
-    let mut file = WordFile::new(PATH);
+    let renderer = window_renderer::WindowRenderer::new(&mut terminal);
+    let file = WordFile::new(PATH);
 
     game_logic::game_loop(file, renderer?);
 
