@@ -1,4 +1,5 @@
 use std::io;
+use thiserror::Error;
 
 use ratatui::backend::CrosstermBackend;
 use ratatui::widgets::{Block, Borders};
@@ -7,6 +8,7 @@ use ratatui::Terminal;
 use super::window::Window;
 
 type CrossTermTerminal = Terminal<CrosstermBackend<io::Stdout>>;
+
 pub struct WindowRenderer<'a> {
     terminal: &'a mut CrossTermTerminal,
     game_win: Window,
@@ -40,19 +42,20 @@ impl<'a> WindowRenderer<'a> {
     }
 
     pub fn render_windows(&mut self) {
-        self.render_game_win();
-        self.render_input_win();
-        self.render_info_win();
-
         let result = self.terminal.draw(|frame| {
+            // RENDER GAME WINDOW
             frame.render_widget(
                 Block::default().borders(Borders::all()).title("GAME"),
                 self.game_win.get_window(),
             );
+
+            // RENDER INPUT WINDOW
             frame.render_widget(
                 Block::default().borders(Borders::all()).title("INPUT"),
                 self.input_win.get_window(),
             );
+
+            // RENDER INFO WINDOW
             frame.render_widget(
                 Block::default().borders(Borders::all()).title("INFO"),
                 self.info_win.get_window(),
@@ -61,10 +64,12 @@ impl<'a> WindowRenderer<'a> {
 
         if result.is_err() {}
     }
+}
 
-    fn render_game_win(&self) {}
-
-    fn render_input_win(&self) {}
-
-    fn render_info_win(&self) {}
+#[derive(Error, Debug)]
+enum Error {
+    #[error("Error rendering window!")]
+    RenderError,
+    #[error("Unkown error occurred.")]
+    Unknown,
 }

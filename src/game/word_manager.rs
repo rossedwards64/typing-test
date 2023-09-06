@@ -1,32 +1,48 @@
+use std::path::Path;
+
+use super::word_file::WordFile;
+
 type WordList = Vec<Word>;
 
-pub(super) struct WordManager {
+pub(super) struct WordManager<P>
+where
+    P: AsRef<Path>,
+{
+    file: WordFile<P>,
     list: WordList,
     correct_words: u32,
     missed_words: u32,
 }
 
-impl WordManager {
-    pub fn new() -> Self {
+impl<P> WordManager<P>
+where
+    P: AsRef<Path>,
+{
+    pub fn new(file: WordFile<P>) -> Self {
         Self {
+            file,
             list: Vec::new(),
             correct_words: 0,
             missed_words: 0,
         }
     }
 
-    fn spawn_word() {}
+    pub fn spawn_word(&mut self) -> &Word {
+        let word = Word::new(self.file.get_random_word());
+        self.list.push(word);
+        self.list.last().unwrap()
+    }
 
-    fn check_words() {}
+    pub fn check_words() {}
 
-    fn erase_words() {}
+    pub fn erase_words() {}
 
     const fn list(&self) -> &WordList {
         &self.list
     }
 }
 
-pub(self) struct Word {
+pub(super) struct Word {
     chars: String,
     pos_x: u16,
     pos_y: u16,
@@ -34,9 +50,9 @@ pub(self) struct Word {
 }
 
 impl Word {
-    fn new() -> Self {
+    fn new(word: String) -> Self {
         Self {
-            chars: String::new(),
+            chars: word,
             pos_x: 0,
             pos_y: 0,
             correct: false,

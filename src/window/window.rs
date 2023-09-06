@@ -1,5 +1,3 @@
-use std::time::Duration;
-use crossterm::event;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Color,
@@ -29,25 +27,6 @@ impl Window {
                 .constraints([Constraint::Length(width)]),
             colour: Color::Cyan,
         }
-    }
-
-    pub fn get_input(&self) -> String {
-        let mut buf = String::new();
-        if matches!(event::poll(Duration::from_millis(100)), Ok(true)) {
-            while let Ok(event) = event::read() {
-                if let event::Event::Key(key) = event {
-                    match key.code {
-                        event::KeyCode::Char(c) => buf.push(c),
-                        event::KeyCode::Backspace => {
-                            buf.pop();
-                        }
-                        _ => (),
-                    }
-                }
-            }
-        }
-
-        buf
     }
 
     pub fn get_window(&self) -> Rect {

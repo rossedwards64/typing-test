@@ -1,5 +1,3 @@
-#![allow(dead_code, unused)]
-
 mod game;
 mod window;
 
@@ -26,13 +24,9 @@ fn main() -> Result<(), io::Error> {
     let mut terminal = setup_tui()?;
 
     let mut renderer = window_renderer::WindowRenderer::new(&mut terminal);
+    let mut file = WordFile::new(PATH);
 
-    let mut word_file = WordFile::new(PATH);
-    let _word = word_file.get_random_word();
-
-    renderer?.render_windows();
-
-    game_logic::game_loop();
+    game_logic::game_loop(file, renderer?);
 
     thread::sleep(Duration::from_secs(5));
 
