@@ -1,18 +1,17 @@
 use std::io;
 
-use tui::backend::CrosstermBackend;
-use tui::layout::{Alignment, Constraint, Direction};
-use tui::widgets::{Block, Borders, Paragraph};
-use tui::{layout::Layout, Terminal};
+use ratatui::backend::CrosstermBackend;
+use ratatui::widgets::{Block, Borders};
+use ratatui::Terminal;
 
-use super::window::{GameWindow, InfoWindow, InputWindow, Window};
+use super::window::Window;
 
 type CrossTermTerminal = Terminal<CrosstermBackend<io::Stdout>>;
 pub struct WindowRenderer<'a> {
     terminal: &'a mut CrossTermTerminal,
-    game_win: GameWindow,
-    input_win: InputWindow,
-    info_win: InfoWindow,
+    game_win: Window,
+    input_win: Window,
+    info_win: Window,
     width: u16,
     height: u16,
 }
@@ -24,11 +23,11 @@ impl<'a> WindowRenderer<'a> {
             Err(err) => panic!("Couldn't get terminal size! {err}"),
         };
 
-        let game_win = GameWindow::new(0, 0, height.saturating_sub(6), width);
+        let game_win = Window::new(0, 0, height.saturating_sub(6), width);
 
-        let input_win = InputWindow::new(0, 22, 5, width.saturating_div(2));
+        let input_win = Window::new(0, 22, 5, width.saturating_div(2));
 
-        let info_win = InfoWindow::new(width.saturating_div(2), 22, 8, width.saturating_div(2));
+        let info_win = Window::new(width.saturating_div(2), 22, 8, width.saturating_div(2));
 
         Ok(Self {
             terminal,
