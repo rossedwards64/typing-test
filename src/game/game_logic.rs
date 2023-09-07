@@ -6,9 +6,10 @@ use std::{
 };
 
 use crossterm::event;
+use thiserror::Error;
 
 use super::{word_file::WordFile, word_manager::WordManager};
-use crate::window::window_renderer::WindowRenderer;
+use crate::window::window_renderer::{WindowRenderer, WindowRendererError};
 
 struct GameState<'a, P>
 where
@@ -66,7 +67,7 @@ impl ToString for Timer {
     }
 }
 
-pub fn game_loop<P>(file: WordFile<P>, renderer: WindowRenderer<'_>)
+pub fn game_loop<P>(file: WordFile<P>, renderer: WindowRenderer<'_>) -> Result<(), GameLoopError>
 where
     P: AsRef<Path>,
 {
@@ -103,17 +104,23 @@ where
     };
 
     loop {
-        update(&mut game_state, &mut game_info, &rx);
-        input(&mut game_state);
-        render(&mut game_state, &game_info);
+        update(&mut game_state, &mut game_info, &rx)?;
+        input(&mut game_state)?;
+        render(&mut game_state, &game_info)?;
 
         if game_state.terminate {
-            return;
+            break;
         }
     }
+
+    Ok(())
 }
 
-fn update<P>(game_state: &mut GameState<P>, game_info: &mut GameInfo, rx: &Receiver<Timer>)
+fn update<P>(
+    game_state: &mut GameState<P>,
+    game_info: &mut GameInfo,
+    rx: &Receiver<Timer>,
+) -> Result<(), GameLoopError>
 where
     P: AsRef<Path>,
 {
@@ -122,9 +129,10 @@ where
     let _ = rx.try_recv().map(|timer| {
         game_info.timer = timer;
     });
+    Ok(())
 }
 
-fn input<P>(game_state: &mut GameState<P>)
+fn input<P>(game_state: &mut GameState<P>) -> Result<(), GameLoopError>
 where
     P: AsRef<Path>,
 {
@@ -142,13 +150,23 @@ where
             }
         }
     }
+    Ok(())
 }
 
-fn render<P>(game_state: &mut GameState<P>, game_info: &GameInfo)
+fn render<P>(game_state: &mut GameState<P>, game_info: &GameInfo) -> Result<(), GameLoopError>
 where
     P: AsRef<Path>,
 {
     game_state
         .renderer
-        .render_windows(&game_state.input_buf, game_info);
+        .render_windows(&game_state.input_buf, game_info)
+        .map_err(|err| GameLoopError::FailedToRender(err))
+}
+
+#[derive(Debug, Error)]
+pub enum GameLoopError {
+    #[error("Failed to update game state.")]
+    FailedToUpdate(#[from] std::io::Error),
+    #[error("Failed to render game state to terminal.")]
+    FailedToRender(WindowRendererError),
 }

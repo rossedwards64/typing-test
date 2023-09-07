@@ -4,6 +4,7 @@ use super::word_file::WordFile;
 
 type WordList = Vec<Word>;
 
+#[allow(dead_code)]
 pub struct WordManager<P>
 where
     P: AsRef<Path>,
@@ -14,6 +15,7 @@ where
     missed_words: u32,
 }
 
+#[allow(dead_code)]
 impl<P> WordManager<P>
 where
     P: AsRef<Path>,
@@ -42,6 +44,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub struct Word {
     chars: String,
     pos_x: u16,

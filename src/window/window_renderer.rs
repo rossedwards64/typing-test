@@ -2,6 +2,7 @@ use crate::game::game_logic::GameInfo;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use std::io;
+use std::ops::Div;
 use thiserror::Error;
 
 use ratatui::backend::CrosstermBackend;
@@ -20,15 +21,23 @@ pub struct WindowRenderer<'a> {
 }
 
 impl<'a> WindowRenderer<'a> {
-    pub fn new(terminal: &'a mut CrossTermTerminal) -> Result<Self, io::Error> {
+    pub fn new(terminal: &'a mut CrossTermTerminal) -> Result<Self, WindowRendererError> {
         let (width, height) = match terminal.size() {
             Ok(rect) => (rect.width, rect.height),
-            Err(err) => panic!("Couldn't get terminal size! {err}"),
+            Err(err) => return Err(WindowRendererError::InvalidTerminalSize(err)),
         };
 
-        let game_win = Window::new(0, 0, height.saturating_sub(6), width);
-        let input_win = Window::new(0, 22, 5, width.saturating_div(2));
-        let info_win = Window::new(width.saturating_div(2), 22, 8, width.saturating_div(2));
+        // TODO: use division to get the y position for windows instead of hardcoded numbers
+        let game_win = Window::new(0, 0,
+                                   height.saturating_sub(6),
+                                   width);
+
+        let input_win = Window::new(0, 22, 5,
+                                    width.saturating_div(2));
+
+        let info_win = Window::new(width.saturating_div(2),
+                                   22, 8,
+                                   width.saturating_div(2));
 
         Ok(Self {
             terminal,
@@ -38,7 +47,11 @@ impl<'a> WindowRenderer<'a> {
         })
     }
 
-    pub fn render_windows(&mut self, input: &str, game_info: &GameInfo) {
+    pub fn render_windows(
+        &mut self,
+        input: &str,
+        game_info: &GameInfo,
+    ) -> Result<(), WindowRendererError> {
         let make_block = |title, colour| {
             Block::default()
                 .borders(Borders::ALL)
@@ -67,18 +80,21 @@ impl<'a> WindowRenderer<'a> {
         ]))
         .block(make_block("INFO", Color::Cyan));
 
-        let _ = self.terminal.draw(|frame| {
+        match self.terminal.draw(|frame| {
             frame.render_widget(words, self.game_win.get_window());
             frame.render_widget(input, self.input_win.get_window());
             frame.render_widget(info, self.info_win.get_window());
-        });
+        }) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(WindowRendererError::FailedToRender(e)),
+        }
     }
 }
 
 #[derive(Error, Debug)]
-enum Error {
-    #[error("Error rendering window!")]
-    RenderError,
-    #[error("Unkown error occurred.")]
-    Unknown,
+pub enum WindowRendererError {
+    #[error("Couldn't get terminal size! {0}")]
+    InvalidTerminalSize(io::Error),
+    #[error("Error rendering window! {0}")]
+    FailedToRender(io::Error),
 }

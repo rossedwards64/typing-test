@@ -15,6 +15,7 @@ where
     rng: ThreadRng,
 }
 
+#[allow(dead_code)]
 impl<P> WordFile<P>
 where
     P: AsRef<Path>,
