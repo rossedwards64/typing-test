@@ -1,5 +1,5 @@
-mod game;
-mod window;
+pub mod game;
+pub mod window;
 
 #[cfg(test)]
 mod tests {

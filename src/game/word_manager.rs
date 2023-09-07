@@ -4,7 +4,7 @@ use super::word_file::WordFile;
 
 type WordList = Vec<Word>;
 
-pub(super) struct WordManager<P>
+pub struct WordManager<P>
 where
     P: AsRef<Path>,
 {
@@ -42,7 +42,7 @@ where
     }
 }
 
-pub(super) struct Word {
+pub struct Word {
     chars: String,
     pos_x: u16,
     pos_y: u16,

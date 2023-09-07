@@ -1,5 +1,6 @@
+use crate::game::game_logic::GameInfo;
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Line, Span, Text};
+use ratatui::text::{Line, Span};
 use std::io;
 use thiserror::Error;
 
@@ -16,8 +17,6 @@ pub struct WindowRenderer<'a> {
     game_win: Window,
     input_win: Window,
     info_win: Window,
-    width: u16,
-    height: u16,
 }
 
 impl<'a> WindowRenderer<'a> {
@@ -28,9 +27,7 @@ impl<'a> WindowRenderer<'a> {
         };
 
         let game_win = Window::new(0, 0, height.saturating_sub(6), width);
-
         let input_win = Window::new(0, 22, 5, width.saturating_div(2));
-
         let info_win = Window::new(width.saturating_div(2), 22, 8, width.saturating_div(2));
 
         Ok(Self {
@@ -38,24 +35,24 @@ impl<'a> WindowRenderer<'a> {
             game_win,
             input_win,
             info_win,
-            width,
-            height,
         })
     }
 
-    pub fn render_windows(&mut self, input: &str) {
+    pub fn render_windows(&mut self, input: &str, game_info: &GameInfo) {
         let make_block = |title, colour| {
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
                 .title(Span::styled(
                     title,
-                    Style::default().add_modifier(Modifier::BOLD).fg(colour),
+                    Style::default()
+                        .add_modifier(Modifier::BOLD | Modifier::UNDERLINED)
+                        .fg(colour),
                 ))
         };
 
         let words = Paragraph::new("")
-            .block(make_block("GAME", Color::Red))
+            .block(make_block("TYPING TEST", Color::Red))
             .scroll((0, 0));
 
         let input = Paragraph::new(input)
@@ -63,11 +60,10 @@ impl<'a> WindowRenderer<'a> {
             .style(Style::default());
 
         let info = Paragraph::new(Line::from(vec![
-            format!("Score: 0").into(),
-            format!("Time: 0:00").into(),
-            format!("Words: 0").into(),
-            format!("WPM: 0").into(),
-            format!("X/Y: 0, 0").into(),
+            format!("Score: {} ", game_info.score).into(),
+            format!("Time: {} ", game_info.timer.to_string()).into(),
+            format!("Words: {} ", game_info.words).into(),
+            format!("WPM: {}", game_info.wpm).into(),
         ]))
         .block(make_block("INFO", Color::Cyan));
 
