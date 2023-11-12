@@ -1,10 +1,9 @@
+use rand::{rngs::ThreadRng, Rng};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::Path,
 };
-
-use rand::{rngs::ThreadRng, Rng};
 
 pub struct WordFile<P>
 where
@@ -53,7 +52,7 @@ where
     }
 
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
 }

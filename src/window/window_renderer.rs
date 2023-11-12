@@ -1,15 +1,14 @@
-use crate::game::game_logic::GameInfo;
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Line, Span};
-use std::io;
-use std::ops::Div;
-use thiserror::Error;
-
-use ratatui::backend::CrosstermBackend;
-use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Terminal;
-
 use super::window::Window;
+use crate::game::game_logic::GameInfo;
+use ratatui::{
+    backend::CrosstermBackend,
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, Paragraph},
+    Terminal,
+};
+use std::io;
+use thiserror::Error;
 
 type CrossTermTerminal = Terminal<CrosstermBackend<io::Stdout>>;
 
@@ -27,17 +26,16 @@ impl<'a> WindowRenderer<'a> {
             Err(err) => return Err(WindowRendererError::InvalidTerminalSize(err)),
         };
 
-        // TODO: use division to get the y position for windows instead of hardcoded numbers
-        let game_win = Window::new(0, 0,
-                                   height.saturating_sub(6),
-                                   width);
+        let lower_win_pos: u16 = 22;
+        let game_win = Window::new(0, 0, height.saturating_sub(6), width);
 
-        let input_win = Window::new(0, 22, 5,
-                                    width.saturating_div(2));
-
-        let info_win = Window::new(width.saturating_div(2),
-                                   22, 8,
-                                   width.saturating_div(2));
+        let input_win = Window::new(0, lower_win_pos, 5, width.saturating_div(2));
+        let info_win = Window::new(
+            width.saturating_div(2),
+            lower_win_pos,
+            8,
+            width.saturating_div(2),
+        );
 
         Ok(Self {
             terminal,
@@ -93,8 +91,8 @@ impl<'a> WindowRenderer<'a> {
 
 #[derive(Error, Debug)]
 pub enum WindowRendererError {
-    #[error("Couldn't get terminal size! {0}")]
+    #[error("Couldn't get terminal size. {0}")]
     InvalidTerminalSize(io::Error),
-    #[error("Error rendering window! {0}")]
+    #[error("Error rendering window. {0}")]
     FailedToRender(io::Error),
 }

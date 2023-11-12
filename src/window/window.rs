@@ -18,16 +18,20 @@ impl Window {
             layout: Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)
-                .constraints([Constraint::Length(width)]),
+                .constraints([Constraint::Percentage(width)]),
         }
     }
 
     pub fn get_window(&self) -> Rect {
-        self.layout.split(Rect {
-            x: self.x,
-            y: self.y,
-            width: self.width,
-            height: self.height,
-        })[0]
+        *self
+            .layout
+            .split(Rect {
+                x: self.x,
+                y: self.y,
+                width: self.width,
+                height: self.height,
+            })
+            .first()
+            .unwrap()
     }
 }

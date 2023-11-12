@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use super::word_file::WordFile;
+use std::path::Path;
 
 type WordList = Vec<Word>;
 
@@ -35,9 +34,9 @@ where
         self.list.last().unwrap()
     }
 
-    pub fn check_words() {}
+    pub const fn check_words() {}
 
-    pub fn erase_words() {}
+    pub const fn erase_words() {}
 
     const fn list(&self) -> &WordList {
         &self.list
@@ -53,7 +52,7 @@ pub struct Word {
 }
 
 impl Word {
-    fn new(word: String) -> Self {
+    const fn new(word: String) -> Self {
         Self {
             chars: word,
             pos_x: 0,

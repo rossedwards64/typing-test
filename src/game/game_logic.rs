@@ -1,15 +1,21 @@
-use std::{
-    path::Path,
-    sync::mpsc::{self, Receiver},
-    thread,
-    time::Duration,
-};
-
-use crossterm::event;
-use thiserror::Error;
-
 use super::{word_file::WordFile, word_manager::WordManager};
 use crate::window::window_renderer::{WindowRenderer, WindowRendererError};
+use crossterm::event;
+use std::{
+    any::Any,
+    path::Path,
+    sync::{
+        atomic::AtomicBool,
+        mpsc::{self, Receiver},
+    },
+    thread::{self, JoinHandle},
+    time::Duration,
+};
+use thiserror::Error;
+
+type ThreadError = Box<dyn Any + Send>;
+
+static TERMINATE: AtomicBool = AtomicBool::new(false);
 
 struct GameState<'a, P>
 where
@@ -18,7 +24,7 @@ where
     word_manager: WordManager<P>,
     renderer: WindowRenderer<'a>,
     input_buf: String,
-    terminate: bool,
+    timer_thread: JoinHandle<()>,
 }
 
 pub struct GameInfo {
@@ -35,7 +41,7 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             minutes: 0,
             seconds: 0,
@@ -48,6 +54,12 @@ impl Timer {
             self.minutes += 1;
             self.seconds = 0;
         }
+    }
+}
+
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -72,7 +84,7 @@ where
     P: AsRef<Path>,
 {
     let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
+    let timer_thread = thread::spawn(move || {
         let mut timer = Timer {
             minutes: 0,
             seconds: 0,
@@ -86,6 +98,10 @@ where
             if res.is_err() {
                 continue;
             }
+
+            if TERMINATE.load(std::sync::atomic::Ordering::Acquire) {
+                break;
+            }
         }
     });
 
@@ -93,27 +109,23 @@ where
         word_manager: WordManager::new(file),
         renderer,
         input_buf: String::new(),
-        terminate: false,
+        timer_thread,
     };
 
     let mut game_info = GameInfo {
         score: 0,
-        timer: Timer::new(),
+        timer: Timer::default(),
         words: 0,
         wpm: 0,
     };
 
-    loop {
+    while !TERMINATE.load(std::sync::atomic::Ordering::Acquire) {
         update(&mut game_state, &mut game_info, &rx)?;
         input(&mut game_state)?;
         render(&mut game_state, &game_info)?;
-
-        if game_state.terminate {
-            break;
-        }
     }
 
-    Ok(())
+    end_game(game_state).map_or_else(|| Ok(()), |err| Err(err))
 }
 
 fn update<P>(
@@ -143,8 +155,9 @@ where
                 event::KeyCode::Backspace => {
                     game_state.input_buf.pop();
                 }
+                event::KeyCode::Enter => game_state.input_buf.clear(),
                 event::KeyCode::Esc => {
-                    game_state.terminate = true;
+                    TERMINATE.store(true, std::sync::atomic::Ordering::Release);
                 }
                 _ => (),
             }
@@ -160,13 +173,26 @@ where
     game_state
         .renderer
         .render_windows(&game_state.input_buf, game_info)
-        .map_err(|err| GameLoopError::FailedToRender(err))
+        .map_err(GameLoopError::RenderingError)
+}
+
+fn end_game<P>(game_state: GameState<P>) -> Option<GameLoopError>
+where
+    P: AsRef<Path>,
+{
+    game_state
+        .timer_thread
+        .join()
+        .map_err(GameLoopError::FailedToShutDown)
+        .err()
 }
 
 #[derive(Debug, Error)]
 pub enum GameLoopError {
-    #[error("Failed to update game state.")]
-    FailedToUpdate(#[from] std::io::Error),
-    #[error("Failed to render game state to terminal.")]
-    FailedToRender(WindowRendererError),
+    #[error("Failed to update game state. {0}")]
+    UpdatingGameState(#[from] std::io::Error),
+    #[error("Failed to render game state to terminal. {0}")]
+    RenderingError(WindowRendererError),
+    #[error("Failed to shut down game.")]
+    FailedToShutDown(ThreadError),
 }
